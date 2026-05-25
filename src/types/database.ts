@@ -1,4 +1,5 @@
 export type TransactionType = 'income' | 'expense'
+export type CategoryType = 'income' | 'expense' | 'both'
 
 export type Category =
   | 'Alimentação'
@@ -23,8 +24,8 @@ export const CATEGORIES: Category[] = [
   'Outros',
 ]
 
-export const INCOME_CATEGORIES: Category[] = ['Salário', 'Freelance', 'Outros']
-export const EXPENSE_CATEGORIES: Category[] = [
+export const INCOME_CATEGORIES: string[] = ['Salário', 'Freelance', 'Outros']
+export const EXPENSE_CATEGORIES: string[] = [
   'Alimentação',
   'Transporte',
   'Moradia',
@@ -44,6 +45,14 @@ export interface Transaction {
   category: string
   created_at: string
   updated_at: string
+}
+
+export interface UserCategory {
+  id: string
+  user_id: string
+  name: string
+  type: CategoryType
+  created_at: string
 }
 
 export type Database = {
@@ -82,6 +91,30 @@ export type Database = {
           category?: string
           created_at?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_categories: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          type: 'income' | 'expense' | 'both'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          type: 'income' | 'expense' | 'both'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          type?: 'income' | 'expense' | 'both'
+          created_at?: string
         }
         Relationships: []
       }
