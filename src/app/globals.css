@@ -128,3 +128,19 @@
     @apply font-sans;
   }
 }
+
+/* Login/Signup background animations */
+@keyframes chart-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0%   0 0); }
+}
+
+@keyframes ticker-float {
+  0%, 100% { transform: translateY(0px);  }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes live-blink {
+  0%, 100% { opacity: 1;   }
+  50%       { opacity: 0.1; }
+}

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FinançasPessoas",
-  description: "Gerencie suas finanças pessoais com simplicidade",
+  title: "Controle Financeiro | Nicholas Tognetti",
+  description: "Controle suas finanças pessoais e investimentos com inteligência",
 };
 
 export default function RootLayout({

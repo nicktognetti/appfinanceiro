@@ -35,7 +35,7 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
         <div className="bg-blue-600 text-white p-1.5 rounded-lg">
           <TrendingUp className="h-4 w-4" />
         </div>
-        <span className="font-bold text-slate-800 dark:text-slate-100">FinançasPessoas</span>
+        <span className="font-bold text-slate-800 dark:text-slate-100">Controle Financeiro</span>
       </div>
 
       <div className="flex items-center gap-1">
@@ -52,7 +52,7 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
               <div className="bg-blue-600 text-white p-1.5 rounded-lg">
                 <TrendingUp className="h-4 w-4" />
               </div>
-              <span className="font-bold text-slate-800 dark:text-slate-100">FinançasPessoas</span>
+              <span className="font-bold text-slate-800 dark:text-slate-100">Controle Financeiro</span>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
               <X className="h-4 w-4" />

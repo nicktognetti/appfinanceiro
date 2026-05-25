@@ -29,11 +29,14 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
   return (
     <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 min-h-screen">
       <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-2">
-          <div className="bg-blue-600 text-white p-1.5 rounded-lg">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-blue-600 text-white p-1.5 rounded-lg flex-shrink-0">
             <TrendingUp className="h-5 w-5" />
           </div>
-          <span className="font-bold text-slate-800 dark:text-slate-100 text-lg">FinançasPessoas</span>
+          <div className="min-w-0">
+            <span className="font-bold text-slate-800 dark:text-slate-100 text-base leading-tight block truncate">Controle Financeiro</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 block truncate">Nicholas Tognetti</span>
+          </div>
         </div>
       </div>
 
