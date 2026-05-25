@@ -8,6 +8,7 @@ import { LayoutDashboard, List, LogOut, Menu, TrendingUp, X } from 'lucide-react
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -27,26 +28,29 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
   }
 
   return (
-    <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200">
+    <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
       <div className="flex items-center gap-2">
         <div className="bg-blue-600 text-white p-1.5 rounded-lg">
           <TrendingUp className="h-4 w-4" />
         </div>
-        <span className="font-bold text-slate-800">FinançasPessoas</span>
+        <span className="font-bold text-slate-800 dark:text-slate-100">FinançasPessoas</span>
       </div>
 
-      <Button variant="ghost" size="icon" onClick={() => setOpen(true)}>
-        <Menu className="h-5 w-5" />
-      </Button>
+      <div className="flex items-center gap-1">
+        <ThemeToggle className="text-slate-500 dark:text-slate-400" />
+        <Button variant="ghost" size="icon" onClick={() => setOpen(true)}>
+          <Menu className="h-5 w-5" />
+        </Button>
+      </div>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-64 p-0">
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+        <SheetContent side="left" className="w-64 p-0 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="bg-blue-600 text-white p-1.5 rounded-lg">
                 <TrendingUp className="h-4 w-4" />
               </div>
-              <span className="font-bold text-slate-800">FinançasPessoas</span>
+              <span className="font-bold text-slate-800 dark:text-slate-100">FinançasPessoas</span>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
               <X className="h-4 w-4" />
@@ -64,8 +68,8 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                     active
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -74,13 +78,16 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
               )
             })}
           </nav>
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100">
-            <p className="text-xs text-slate-400 px-3 mb-2 truncate">{userEmail}</p>
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+            <div className="flex items-center justify-between px-3">
+              <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{userEmail}</p>
+              <ThemeToggle className="text-slate-500 dark:text-slate-400" />
+            </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="w-full justify-start text-slate-600 hover:text-red-600 hover:bg-red-50"
+              className="w-full justify-start text-slate-600 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sair
