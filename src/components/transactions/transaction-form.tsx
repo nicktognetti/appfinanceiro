@@ -4,7 +4,13 @@ import { useState, useEffect, useRef } from 'react'
 import { createTransaction, updateTransaction } from '@/app/actions/transactions'
 import { createCategory } from '@/app/actions/categories'
 import { createClient } from '@/lib/supabase/client'
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, type Transaction } from '@/types/database'
+import {
+  EXPENSE_CATEGORIES,
+  INCOME_CATEGORIES,
+  INVESTMENT_CATEGORIES,
+  type Transaction,
+  type TransactionType,
+} from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,12 +31,11 @@ interface Props {
 }
 
 export default function TransactionForm({ transaction, onSuccess, onCancel }: Props) {
-  const [type, setType] = useState<'income' | 'expense'>(transaction?.type ?? 'expense')
+  const [type, setType] = useState<TransactionType>(transaction?.type ?? 'expense')
   const [category, setCategory] = useState(transaction?.category ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Categorias personalizadas
   const [customCategories, setCustomCategories] = useState<string[]>([])
   const [showNewCategory, setShowNewCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
@@ -38,33 +43,33 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
   const [categoryError, setCategoryError] = useState<string | null>(null)
   const newCategoryInputRef = useRef<HTMLInputElement>(null)
 
-  // Busca categorias personalizadas do usuário compatíveis com o tipo atual
   useEffect(() => {
     const supabase = createClient()
+    const dbType = type === 'investment' ? 'both' : type
     supabase
       .from('user_categories')
       .select('name')
-      .or(`type.eq.${type},type.eq.both`)
+      .or(`type.eq.${dbType},type.eq.both`)
       .order('name')
       .then(({ data }) => {
         if (data) setCustomCategories(data.map(c => c.name))
       })
   }, [type])
 
-  // Foca no input ao abrir campo de nova categoria
   useEffect(() => {
     if (showNewCategory) {
       setTimeout(() => newCategoryInputRef.current?.focus(), 50)
     }
   }, [showNewCategory])
 
-  const defaultCategories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
-  const allCategories = [
-    ...defaultCategories,
-    ...customCategories.filter(c => !defaultCategories.includes(c)),
-  ]
+  const defaultCategories =
+    type === 'income'
+      ? INCOME_CATEGORIES
+      : type === 'investment'
+      ? INVESTMENT_CATEGORIES
+      : EXPENSE_CATEGORIES
 
-  function handleTypeChange(newType: 'income' | 'expense') {
+  function handleTypeChange(newType: TransactionType) {
     setType(newType)
     setCategory('')
     setShowNewCategory(false)
@@ -78,7 +83,8 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
     setSavingCategory(true)
     setCategoryError(null)
 
-    const result = await createCategory(name, type)
+    const categoryType = type === 'investment' ? 'both' : type
+    const result = await createCategory(name, categoryType)
 
     if (result?.error) {
       setCategoryError(result.error)
@@ -86,7 +92,6 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
       return
     }
 
-    // Adiciona ao estado local e seleciona automaticamente
     setCustomCategories(prev => [...prev.filter(c => c !== name), name].sort())
     setCategory(name)
     setShowNewCategory(false)
@@ -122,6 +127,9 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
     onSuccess()
   }
 
+  const categoryTypeName =
+    type === 'income' ? 'receita' : type === 'investment' ? 'investimento' : 'despesa'
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
@@ -133,28 +141,39 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
       {/* Tipo */}
       <div className="space-y-2">
         <Label>Tipo</Label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
             onClick={() => handleTypeChange('income')}
-            className={`py-2 px-4 rounded-lg text-sm font-medium border transition-colors ${
+            className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
               type === 'income'
                 ? 'bg-green-50 dark:bg-green-950/40 border-green-500 text-green-700 dark:text-green-400'
                 : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
             }`}
           >
-            Receita
+            💰 Receita
           </button>
           <button
             type="button"
             onClick={() => handleTypeChange('expense')}
-            className={`py-2 px-4 rounded-lg text-sm font-medium border transition-colors ${
+            className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
               type === 'expense'
                 ? 'bg-red-50 dark:bg-red-950/40 border-red-500 text-red-700 dark:text-red-400'
                 : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
             }`}
           >
-            Despesa
+            💸 Despesa
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTypeChange('investment')}
+            className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+              type === 'investment'
+                ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-500 text-indigo-700 dark:text-indigo-400'
+                : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
+            }`}
+          >
+            📈 Investimento
           </button>
         </div>
       </div>
@@ -165,15 +184,15 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
         <Input
           id="description"
           name="description"
-          placeholder="Ex: Supermercado, Salário..."
+          placeholder={type === 'investment' ? 'Ex: XPTO3, Tesouro Selic...' : 'Ex: Supermercado, Salário...'}
           defaultValue={transaction?.description}
           required
         />
       </div>
 
-      {/* Valor */}
+      {/* Valor investido */}
       <div className="space-y-2">
-        <Label htmlFor="amount">Valor (R$)</Label>
+        <Label htmlFor="amount">{type === 'investment' ? 'Valor Investido (R$)' : 'Valor (R$)'}</Label>
         <Input
           id="amount"
           name="amount"
@@ -185,6 +204,25 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
           required
         />
       </div>
+
+      {/* Valor atual (somente investimentos) */}
+      {type === 'investment' && (
+        <div className="space-y-2">
+          <Label htmlFor="current_value">
+            Valor Atual (R$)
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-normal ml-1">— opcional</span>
+          </Label>
+          <Input
+            id="current_value"
+            name="current_value"
+            type="number"
+            step="0.01"
+            min="0.01"
+            placeholder="Deixe em branco para usar o valor investido"
+            defaultValue={transaction?.current_value ?? ''}
+          />
+        </div>
+      )}
 
       {/* Data */}
       <div className="space-y-2">
@@ -219,11 +257,9 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
             <SelectValue placeholder="Selecione uma categoria" />
           </SelectTrigger>
           <SelectContent>
-            {/* Padrões */}
             {defaultCategories.map((cat) => (
               <SelectItem key={cat} value={cat}>{cat}</SelectItem>
             ))}
-            {/* Personalizadas (que não conflitem com padrões) */}
             {customCategories.filter(c => !defaultCategories.includes(c)).length > 0 && (
               <>
                 <div className="px-2 py-1 mt-1 border-t border-slate-100 dark:border-slate-700">
@@ -239,11 +275,10 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
           </SelectContent>
         </Select>
 
-        {/* Formulário inline de nova categoria */}
         {showNewCategory && (
           <div className="mt-2 p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 space-y-2">
             <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
-              Nova categoria de {type === 'income' ? 'receita' : 'despesa'}
+              Nova categoria de {categoryTypeName}
             </p>
             <div className="flex gap-2">
               <Input

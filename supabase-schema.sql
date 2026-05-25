@@ -85,3 +85,21 @@ create policy "Users can insert own categories"
 create policy "Users can delete own categories"
   on public.user_categories for delete
   using (auth.uid() = user_id);
+
+-- =============================================
+-- Migração: suporte a Investimentos
+-- Execute este bloco no SQL Editor do Supabase
+-- =============================================
+
+-- 1. Remove a constraint antiga de tipo
+alter table public.transactions
+  drop constraint if exists transactions_type_check;
+
+-- 2. Adiciona nova constraint com 'investment'
+alter table public.transactions
+  add constraint transactions_type_check
+  check (type in ('income', 'expense', 'investment'));
+
+-- 3. Coluna para valor atual do investimento (para cálculo de rendimento)
+alter table public.transactions
+  add column if not exists current_value decimal(12, 2);

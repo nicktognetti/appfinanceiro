@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/transacoes', label: 'Transações', icon: List },
+  { href: '/investimentos', label: 'Investimentos', icon: TrendingUp },
   { href: '/categorias', label: 'Categorias', icon: Tag },
 ]
 

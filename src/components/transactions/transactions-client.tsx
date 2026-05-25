@@ -3,9 +3,9 @@
 import { useState, useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ArrowDownCircle, ArrowUpCircle, Download, Pencil, Search } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, Download, Pencil, Search, TrendingUp } from 'lucide-react'
 import type { Transaction } from '@/types/database'
-import { CATEGORIES } from '@/types/database'
+import { CATEGORIES, INVESTMENT_CATEGORIES } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -36,6 +36,8 @@ function setter(fn: (v: string) => void) {
   return (v: string | null) => { if (v !== null) fn(v) }
 }
 
+const ALL_CATEGORIES = [...new Set([...CATEGORIES, ...INVESTMENT_CATEGORIES])]
+
 export default function TransactionsClient({ transactions }: Props) {
   const currentDate = new Date()
   const [month, setMonth] = useState(String(currentDate.getMonth() + 1))
@@ -63,9 +65,11 @@ export default function TransactionsClient({ transactions }: Props) {
   }, [transactions, month, year, category, typeFilter, search])
 
   function exportCSV() {
+    const typeLabel = (t: Transaction) =>
+      t.type === 'income' ? 'Receita' : t.type === 'investment' ? 'Investimento' : 'Despesa'
     const header = 'Data,Descrição,Tipo,Categoria,Valor\n'
     const rows = filtered.map(t =>
-      `${t.date},"${t.description}",${t.type === 'income' ? 'Receita' : 'Despesa'},"${t.category}",${t.amount}`
+      `${t.date},"${t.description}",${typeLabel(t)},"${t.category}",${t.amount}`
     ).join('\n')
     const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -78,6 +82,7 @@ export default function TransactionsClient({ transactions }: Props) {
 
   const totalIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const totalExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
+  const totalInvestment = filtered.filter(t => t.type === 'investment').reduce((s, t) => s + Number(t.amount), 0)
 
   return (
     <div className="space-y-6">
@@ -131,8 +136,9 @@ export default function TransactionsClient({ transactions }: Props) {
             <SelectTrigger className="w-full"><SelectValue placeholder="Tipo" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="income">Receitas</SelectItem>
-              <SelectItem value="expense">Despesas</SelectItem>
+              <SelectItem value="income">💰 Receitas</SelectItem>
+              <SelectItem value="expense">💸 Despesas</SelectItem>
+              <SelectItem value="investment">📈 Investimentos</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -142,21 +148,25 @@ export default function TransactionsClient({ transactions }: Props) {
             <SelectTrigger className="w-full sm:w-64"><SelectValue placeholder="Categoria" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as categorias</SelectItem>
-              {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              {ALL_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
       </div>
 
       {/* Resumo filtrado */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="bg-green-50 dark:bg-green-950/30 rounded-xl p-3 border border-green-100 dark:border-green-900">
-          <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">Receitas filtradas</p>
-          <p className="text-lg font-bold text-green-700 dark:text-green-400">{formatCurrency(totalIncome)}</p>
+          <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">Receitas</p>
+          <p className="text-base font-bold text-green-700 dark:text-green-400">{formatCurrency(totalIncome)}</p>
         </div>
         <div className="bg-red-50 dark:bg-red-950/30 rounded-xl p-3 border border-red-100 dark:border-red-900">
-          <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Despesas filtradas</p>
-          <p className="text-lg font-bold text-red-700 dark:text-red-400">{formatCurrency(totalExpense)}</p>
+          <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Despesas</p>
+          <p className="text-base font-bold text-red-700 dark:text-red-400">{formatCurrency(totalExpense)}</p>
+        </div>
+        <div className="bg-indigo-50 dark:bg-indigo-950/30 rounded-xl p-3 border border-indigo-100 dark:border-indigo-900">
+          <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1">Investimentos</p>
+          <p className="text-base font-bold text-indigo-700 dark:text-indigo-400">{formatCurrency(totalInvestment)}</p>
         </div>
       </div>
 
@@ -174,10 +184,14 @@ export default function TransactionsClient({ transactions }: Props) {
                 <div className={`p-2 rounded-lg flex-shrink-0 ${
                   t.type === 'income'
                     ? 'bg-green-50 dark:bg-green-950/40'
+                    : t.type === 'investment'
+                    ? 'bg-indigo-50 dark:bg-indigo-950/40'
                     : 'bg-red-50 dark:bg-red-950/40'
                 }`}>
                   {t.type === 'income'
                     ? <ArrowUpCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    : t.type === 'investment'
+                    ? <TrendingUp className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     : <ArrowDownCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
                   }
                 </div>
@@ -198,10 +212,17 @@ export default function TransactionsClient({ transactions }: Props) {
                   <p className={`font-semibold ${
                     t.type === 'income'
                       ? 'text-green-600 dark:text-green-400'
+                      : t.type === 'investment'
+                      ? 'text-indigo-600 dark:text-indigo-400'
                       : 'text-red-500 dark:text-red-400'
                   }`}>
-                    {t.type === 'income' ? '+' : '-'}{formatCurrency(Number(t.amount))}
+                    {t.type === 'income' ? '+' : ''}{formatCurrency(Number(t.amount))}
                   </p>
+                  {t.type === 'investment' && t.current_value !== null && (
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      atual: {formatCurrency(Number(t.current_value))}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-1 flex-shrink-0">

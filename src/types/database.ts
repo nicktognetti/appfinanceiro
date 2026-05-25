@@ -1,4 +1,4 @@
-export type TransactionType = 'income' | 'expense'
+export type TransactionType = 'income' | 'expense' | 'investment'
 export type CategoryType = 'income' | 'expense' | 'both'
 
 export type Category =
@@ -12,27 +12,16 @@ export type Category =
   | 'Freelance'
   | 'Outros'
 
-export const CATEGORIES: Category[] = [
-  'Alimentação',
-  'Transporte',
-  'Moradia',
-  'Lazer',
-  'Saúde',
-  'Educação',
-  'Salário',
-  'Freelance',
-  'Outros',
-]
-
 export const INCOME_CATEGORIES: string[] = ['Salário', 'Freelance', 'Outros']
 export const EXPENSE_CATEGORIES: string[] = [
-  'Alimentação',
-  'Transporte',
-  'Moradia',
-  'Lazer',
-  'Saúde',
-  'Educação',
-  'Outros',
+  'Alimentação', 'Transporte', 'Moradia', 'Lazer', 'Saúde', 'Educação', 'Outros',
+]
+export const INVESTMENT_CATEGORIES: string[] = [
+  'Renda Fixa', 'Renda Variável', 'Criptomoedas', 'Fundos', 'Outros',
+]
+
+export const CATEGORIES: string[] = [
+  ...new Set([...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES, ...INVESTMENT_CATEGORIES]),
 ]
 
 export interface Transaction {
@@ -43,6 +32,7 @@ export interface Transaction {
   date: string
   type: TransactionType
   category: string
+  current_value: number | null
   created_at: string
   updated_at: string
 }
@@ -65,8 +55,9 @@ export type Database = {
           description: string
           amount: number
           date: string
-          type: 'income' | 'expense'
+          type: 'income' | 'expense' | 'investment'
           category: string
+          current_value: number | null
           created_at: string
           updated_at: string
         }
@@ -76,8 +67,9 @@ export type Database = {
           description: string
           amount: number
           date: string
-          type: 'income' | 'expense'
+          type: 'income' | 'expense' | 'investment'
           category: string
+          current_value?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -87,8 +79,9 @@ export type Database = {
           description?: string
           amount?: number
           date?: string
-          type?: 'income' | 'expense'
+          type?: 'income' | 'expense' | 'investment'
           category?: string
+          current_value?: number | null
           created_at?: string
           updated_at?: string
         }

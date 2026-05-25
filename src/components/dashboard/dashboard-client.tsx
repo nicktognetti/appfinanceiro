@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ArrowDownCircle, ArrowUpCircle, Wallet } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, TrendingUp, Wallet } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -55,7 +55,8 @@ export default function DashboardClient({ transactions }: Props) {
 
   const totalIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const totalExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
-  const balance = totalIncome - totalExpense
+  const totalInvestment = filtered.filter(t => t.type === 'investment').reduce((s, t) => s + Number(t.amount), 0)
+  const balance = totalIncome - totalExpense - totalInvestment
 
   const expenseByCategory = useMemo(() => {
     const map: Record<string, number> = {}
@@ -114,40 +115,52 @@ export default function DashboardClient({ transactions }: Props) {
       </div>
 
       {/* Cards de resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Receitas</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Receitas</p>
               <div className="bg-green-50 dark:bg-green-950/40 p-2 rounded-lg">
                 <ArrowUpCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</p>
+            <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Despesas</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Despesas</p>
               <div className="bg-red-50 dark:bg-red-950/40 p-2 rounded-lg">
                 <ArrowDownCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-red-500 dark:text-red-400">{formatCurrency(totalExpense)}</p>
+            <p className="text-xl font-bold text-red-500 dark:text-red-400">{formatCurrency(totalExpense)}</p>
           </CardContent>
         </Card>
 
-        <Card className={`border-0 shadow-sm ${balance >= 0 ? 'bg-blue-600' : 'bg-red-600'}`}>
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-white/80">Saldo</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Investimentos</p>
+              <div className="bg-indigo-50 dark:bg-indigo-950/40 p-2 rounded-lg">
+                <TrendingUp className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              </div>
+            </div>
+            <p className="text-xl font-bold text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvestment)}</p>
+          </CardContent>
+        </Card>
+
+        <Card className={`border-0 shadow-sm col-span-2 lg:col-span-1 ${balance >= 0 ? 'bg-blue-600' : 'bg-red-600'}`}>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium text-white/80">Saldo Líquido</p>
               <div className="bg-white/20 p-2 rounded-lg">
                 <Wallet className="h-4 w-4 text-white" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-white">{formatCurrency(balance)}</p>
+            <p className="text-xl font-bold text-white">{formatCurrency(balance)}</p>
           </CardContent>
         </Card>
       </div>
@@ -190,10 +203,14 @@ export default function DashboardClient({ transactions }: Props) {
                   <div className={`p-2 rounded-lg flex-shrink-0 ${
                     t.type === 'income'
                       ? 'bg-green-50 dark:bg-green-950/40'
+                      : t.type === 'investment'
+                      ? 'bg-indigo-50 dark:bg-indigo-950/40'
                       : 'bg-red-50 dark:bg-red-950/40'
                   }`}>
                     {t.type === 'income'
                       ? <ArrowUpCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      : t.type === 'investment'
+                      ? <TrendingUp className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                       : <ArrowDownCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
                     }
                   </div>
@@ -206,9 +223,11 @@ export default function DashboardClient({ transactions }: Props) {
                   <p className={`font-semibold text-sm flex-shrink-0 ${
                     t.type === 'income'
                       ? 'text-green-600 dark:text-green-400'
+                      : t.type === 'investment'
+                      ? 'text-indigo-600 dark:text-indigo-400'
                       : 'text-red-500 dark:text-red-400'
                   }`}>
-                    {t.type === 'income' ? '+' : '-'}{formatCurrency(Number(t.amount))}
+                    {t.type === 'income' ? '+' : t.type === 'investment' ? '📈' : '-'}{formatCurrency(Number(t.amount))}
                   </p>
                 </div>
               ))}
