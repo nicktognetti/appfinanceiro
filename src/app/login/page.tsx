@@ -36,14 +36,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-slate-900 p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
             <div className="bg-blue-600 text-white p-2 rounded-lg">
               <TrendingUp className="h-6 w-6" />
             </div>
-            <span className="text-2xl font-bold text-slate-800">FinançasPessoas</span>
+            <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">FinançasPessoas</span>
           </div>
         </div>
 
@@ -57,7 +57,7 @@ export default function LoginPage() {
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
               {error && (
-                <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg border border-red-200">
+                <div className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg border border-red-200 dark:border-red-800">
                   {error}
                 </div>
               )}

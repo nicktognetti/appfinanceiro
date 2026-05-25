@@ -82,8 +82,8 @@ export default function DashboardClient({ transactions }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-1">Visão geral das suas finanças</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Dashboard</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Visão geral das suas finanças</p>
         </div>
         <TransactionDialog />
       </div>
@@ -91,7 +91,7 @@ export default function DashboardClient({ transactions }: Props) {
       {/* Filtro de período */}
       <div className="flex gap-3">
         <Select value={month} onValueChange={setter(setMonth)}>
-          <SelectTrigger className="w-40 bg-white">
+          <SelectTrigger className="w-40 bg-white dark:bg-slate-800 dark:border-slate-700">
             <SelectValue placeholder="Mês" />
           </SelectTrigger>
           <SelectContent>
@@ -103,7 +103,7 @@ export default function DashboardClient({ transactions }: Props) {
         </Select>
 
         <Select value={year} onValueChange={setter(setYear)}>
-          <SelectTrigger className="w-32 bg-white">
+          <SelectTrigger className="w-32 bg-white dark:bg-slate-800 dark:border-slate-700">
             <SelectValue placeholder="Ano" />
           </SelectTrigger>
           <SelectContent>
@@ -115,27 +115,27 @@ export default function DashboardClient({ transactions }: Props) {
 
       {/* Cards de resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-0 shadow-sm bg-white">
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-slate-500">Total Receitas</p>
-              <div className="bg-green-50 p-2 rounded-lg">
-                <ArrowUpCircle className="h-4 w-4 text-green-600" />
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Receitas</p>
+              <div className="bg-green-50 dark:bg-green-950/40 p-2 rounded-lg">
+                <ArrowUpCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm bg-white">
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-slate-500">Total Despesas</p>
-              <div className="bg-red-50 p-2 rounded-lg">
-                <ArrowDownCircle className="h-4 w-4 text-red-500" />
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Despesas</p>
+              <div className="bg-red-50 dark:bg-red-950/40 p-2 rounded-lg">
+                <ArrowDownCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-red-500">{formatCurrency(totalExpense)}</p>
+            <p className="text-2xl font-bold text-red-500 dark:text-red-400">{formatCurrency(totalExpense)}</p>
           </CardContent>
         </Card>
 
@@ -154,18 +154,18 @@ export default function DashboardClient({ transactions }: Props) {
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-0 shadow-sm bg-white">
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-slate-800">Despesas por categoria</CardTitle>
+            <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-100">Despesas por categoria</CardTitle>
           </CardHeader>
           <CardContent>
             <CategoryChart data={expenseByCategory} title="" />
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm bg-white">
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-slate-800">Receitas por categoria</CardTitle>
+            <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-100">Receitas por categoria</CardTitle>
           </CardHeader>
           <CardContent>
             <CategoryChart data={incomeByCategory} title="" />
@@ -174,33 +174,39 @@ export default function DashboardClient({ transactions }: Props) {
       </div>
 
       {/* Transações recentes */}
-      <Card className="border-0 shadow-sm bg-white">
+      <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold text-slate-800">Transações recentes</CardTitle>
+          <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-100">Transações recentes</CardTitle>
         </CardHeader>
         <CardContent>
           {recentTransactions.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-sm">
+            <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-sm">
               Nenhuma transação no período selecionado
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-700">
               {recentTransactions.map(t => (
                 <div key={t.id} className="flex items-center gap-3 py-3">
                   <div className={`p-2 rounded-lg flex-shrink-0 ${
-                    t.type === 'income' ? 'bg-green-50' : 'bg-red-50'
+                    t.type === 'income'
+                      ? 'bg-green-50 dark:bg-green-950/40'
+                      : 'bg-red-50 dark:bg-red-950/40'
                   }`}>
                     {t.type === 'income'
-                      ? <ArrowUpCircle className="h-4 w-4 text-green-600" />
-                      : <ArrowDownCircle className="h-4 w-4 text-red-500" />
+                      ? <ArrowUpCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      : <ArrowDownCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
                     }
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-800 text-sm truncate">{t.description}</p>
-                    <p className="text-xs text-slate-400">{t.category} · {format(parseISO(t.date), "dd MMM", { locale: ptBR })}</p>
+                    <p className="font-medium text-slate-800 dark:text-slate-100 text-sm truncate">{t.description}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      {t.category} · {format(parseISO(t.date), "dd MMM", { locale: ptBR })}
+                    </p>
                   </div>
                   <p className={`font-semibold text-sm flex-shrink-0 ${
-                    t.type === 'income' ? 'text-green-600' : 'text-red-500'
+                    t.type === 'income'
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-500 dark:text-red-400'
                   }`}>
                     {t.type === 'income' ? '+' : '-'}{formatCurrency(Number(t.amount))}
                   </p>

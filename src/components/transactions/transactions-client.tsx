@@ -84,8 +84,8 @@ export default function TransactionsClient({ transactions }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Transações</h1>
-          <p className="text-slate-500 text-sm mt-1">{filtered.length} transação(ões) encontrada(s)</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Transações</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{filtered.length} transação(ões) encontrada(s)</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
@@ -97,7 +97,7 @@ export default function TransactionsClient({ transactions }: Props) {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <div className="col-span-2 sm:col-span-3 lg:col-span-2 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -150,43 +150,45 @@ export default function TransactionsClient({ transactions }: Props) {
 
       {/* Resumo filtrado */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-green-50 rounded-xl p-3 border border-green-100">
-          <p className="text-xs text-green-600 font-medium mb-1">Receitas filtradas</p>
-          <p className="text-lg font-bold text-green-700">{formatCurrency(totalIncome)}</p>
+        <div className="bg-green-50 dark:bg-green-950/30 rounded-xl p-3 border border-green-100 dark:border-green-900">
+          <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">Receitas filtradas</p>
+          <p className="text-lg font-bold text-green-700 dark:text-green-400">{formatCurrency(totalIncome)}</p>
         </div>
-        <div className="bg-red-50 rounded-xl p-3 border border-red-100">
-          <p className="text-xs text-red-600 font-medium mb-1">Despesas filtradas</p>
-          <p className="text-lg font-bold text-red-700">{formatCurrency(totalExpense)}</p>
+        <div className="bg-red-50 dark:bg-red-950/30 rounded-xl p-3 border border-red-100 dark:border-red-900">
+          <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Despesas filtradas</p>
+          <p className="text-lg font-bold text-red-700 dark:text-red-400">{formatCurrency(totalExpense)}</p>
         </div>
       </div>
 
       {/* Lista de transações */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
+          <div className="text-center py-16 text-slate-400 dark:text-slate-500">
             <p className="text-lg font-medium">Nenhuma transação encontrada</p>
             <p className="text-sm mt-1">Ajuste os filtros ou adicione uma nova transação.</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {filtered.map(t => (
-              <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
+              <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                 <div className={`p-2 rounded-lg flex-shrink-0 ${
-                  t.type === 'income' ? 'bg-green-50' : 'bg-red-50'
+                  t.type === 'income'
+                    ? 'bg-green-50 dark:bg-green-950/40'
+                    : 'bg-red-50 dark:bg-red-950/40'
                 }`}>
                   {t.type === 'income'
-                    ? <ArrowUpCircle className="h-4 w-4 text-green-600" />
-                    : <ArrowDownCircle className="h-4 w-4 text-red-500" />
+                    ? <ArrowUpCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    : <ArrowDownCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
                   }
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-800 truncate">{t.description}</p>
+                  <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{t.description}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <Badge variant="secondary" className="text-xs py-0">
                       {t.category}
                     </Badge>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-slate-400 dark:text-slate-500">
                       {format(parseISO(t.date), "dd MMM yyyy", { locale: ptBR })}
                     </span>
                   </div>
@@ -194,7 +196,9 @@ export default function TransactionsClient({ transactions }: Props) {
 
                 <div className="text-right flex-shrink-0">
                   <p className={`font-semibold ${
-                    t.type === 'income' ? 'text-green-600' : 'text-red-500'
+                    t.type === 'income'
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-500 dark:text-red-400'
                   }`}>
                     {t.type === 'income' ? '+' : '-'}{formatCurrency(Number(t.amount))}
                   </p>
@@ -204,7 +208,7 @@ export default function TransactionsClient({ transactions }: Props) {
                   <TransactionDialog
                     transaction={t}
                     trigger={
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-500 hover:bg-blue-50">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30">
                         <Pencil className="h-4 w-4" />
                       </Button>
                     }

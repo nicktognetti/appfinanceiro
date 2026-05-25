@@ -54,7 +54,7 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg border border-red-200">
+        <div className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg border border-red-200 dark:border-red-800">
           {error}
         </div>
       )}
@@ -68,8 +68,8 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
             onClick={() => { setType('income'); setCategory('') }}
             className={`py-2 px-4 rounded-lg text-sm font-medium border transition-colors ${
               type === 'income'
-                ? 'bg-green-50 border-green-500 text-green-700'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'bg-green-50 dark:bg-green-950/40 border-green-500 text-green-700 dark:text-green-400'
+                : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
             }`}
           >
             Receita
@@ -79,8 +79,8 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
             onClick={() => { setType('expense'); setCategory('') }}
             className={`py-2 px-4 rounded-lg text-sm font-medium border transition-colors ${
               type === 'expense'
-                ? 'bg-red-50 border-red-500 text-red-700'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'bg-red-50 dark:bg-red-950/40 border-red-500 text-red-700 dark:text-red-400'
+                : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
             }`}
           >
             Despesa
