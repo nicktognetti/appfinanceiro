@@ -14,6 +14,14 @@ const TransactionSchema = z.object({
     (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
     z.number().positive().nullable().optional()
   ),
+  ticker: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : String(v).toUpperCase().trim()),
+    z.string().min(1).max(10).nullable().optional()
+  ),
+  quantity: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+    z.number().positive().nullable().optional()
+  ),
 })
 
 function revalidateAll() {
@@ -30,7 +38,7 @@ export async function createTransaction(formData: FormData) {
   const parsed = TransactionSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { type, amount, current_value, ...rest } = parsed.data
+  const { type, amount, current_value, ticker, quantity, ...rest } = parsed.data
 
   const { error } = await supabase
     .from('transactions')
@@ -38,8 +46,9 @@ export async function createTransaction(formData: FormData) {
       ...rest,
       type,
       amount,
-      // Investimentos: current_value padrão = amount se não informado
       current_value: type === 'investment' ? (current_value ?? amount) : null,
+      ticker: type === 'investment' ? (ticker ?? null) : null,
+      quantity: type === 'investment' ? (quantity ?? null) : null,
       user_id: user.id,
     })
 
@@ -57,7 +66,7 @@ export async function updateTransaction(id: string, formData: FormData) {
   const parsed = TransactionSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { type, amount, current_value, ...rest } = parsed.data
+  const { type, amount, current_value, ticker, quantity, ...rest } = parsed.data
 
   const { error } = await supabase
     .from('transactions')
@@ -66,6 +75,8 @@ export async function updateTransaction(id: string, formData: FormData) {
       type,
       amount,
       current_value: type === 'investment' ? (current_value ?? amount) : null,
+      ticker: type === 'investment' ? (ticker ?? null) : null,
+      quantity: type === 'investment' ? (quantity ?? null) : null,
     })
     .eq('id', id)
     .eq('user_id', user.id)
@@ -91,6 +102,38 @@ export async function updateCurrentValue(id: string, currentValue: number) {
     .eq('type', 'investment')
 
   if (error) return { error: error.message }
+
+  revalidateAll()
+  return { success: true }
+}
+
+export async function updatePriceForTicker(ticker: string, pricePerShare: number) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  if (pricePerShare <= 0) return { error: 'Preço deve ser positivo' }
+
+  const { data: transactions, error: fetchError } = await supabase
+    .from('transactions')
+    .select('id, quantity')
+    .eq('user_id', user.id)
+    .eq('type', 'investment')
+    .eq('ticker', ticker)
+
+  if (fetchError) return { error: fetchError.message }
+  if (!transactions?.length) return { error: 'Nenhuma transação encontrada' }
+
+  for (const t of transactions) {
+    if (!t.quantity) continue
+    const currentValue = pricePerShare * Number(t.quantity)
+    const { error } = await supabase
+      .from('transactions')
+      .update({ current_value: currentValue })
+      .eq('id', t.id)
+      .eq('user_id', user.id)
+    if (error) return { error: error.message }
+  }
 
   revalidateAll()
   return { success: true }

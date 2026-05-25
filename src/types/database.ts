@@ -17,7 +17,7 @@ export const EXPENSE_CATEGORIES: string[] = [
   'Alimentação', 'Transporte', 'Moradia', 'Lazer', 'Saúde', 'Educação', 'Outros',
 ]
 export const INVESTMENT_CATEGORIES: string[] = [
-  'Renda Fixa', 'Renda Variável', 'Criptomoedas', 'Fundos', 'Outros',
+  'Renda Variável', 'Renda Fixa', 'Criptomoedas', 'Fundos', 'Outros',
 ]
 
 export const CATEGORIES: string[] = [
@@ -33,8 +33,20 @@ export interface Transaction {
   type: TransactionType
   category: string
   current_value: number | null
+  ticker: string | null
+  quantity: number | null
   created_at: string
   updated_at: string
+}
+
+export interface Dividend {
+  id: string
+  user_id: string
+  ticker: string
+  amount: number
+  date: string
+  period: string | null
+  created_at: string
 }
 
 export interface UserCategory {
@@ -58,6 +70,8 @@ export type Database = {
           type: 'income' | 'expense' | 'investment'
           category: string
           current_value: number | null
+          ticker: string | null
+          quantity: number | null
           created_at: string
           updated_at: string
         }
@@ -70,6 +84,8 @@ export type Database = {
           type: 'income' | 'expense' | 'investment'
           category: string
           current_value?: number | null
+          ticker?: string | null
+          quantity?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -82,6 +98,8 @@ export type Database = {
           type?: 'income' | 'expense' | 'investment'
           category?: string
           current_value?: number | null
+          ticker?: string | null
+          quantity?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -107,6 +125,36 @@ export type Database = {
           user_id?: string
           name?: string
           type?: 'income' | 'expense' | 'both'
+          created_at?: string
+        }
+        Relationships: []
+      }
+      dividends: {
+        Row: {
+          id: string
+          user_id: string
+          ticker: string
+          amount: number
+          date: string
+          period: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          ticker: string
+          amount: number
+          date: string
+          period?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          ticker?: string
+          amount?: number
+          date?: string
+          period?: string | null
           created_at?: string
         }
         Relationships: []

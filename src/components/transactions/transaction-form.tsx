@@ -205,8 +205,37 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Pr
         />
       </div>
 
-      {/* Valor atual (somente investimentos) */}
-      {type === 'investment' && (
+      {/* Ticker + Quantidade (somente Renda Variável) */}
+      {type === 'investment' && category === 'Renda Variável' && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="ticker">Código (ticker)</Label>
+            <Input
+              id="ticker"
+              name="ticker"
+              placeholder="Ex: BBSE3"
+              defaultValue={transaction?.ticker ?? ''}
+              style={{ textTransform: 'uppercase' }}
+              maxLength={10}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Quantidade de cotas</Label>
+            <Input
+              id="quantity"
+              name="quantity"
+              type="number"
+              step="1"
+              min="1"
+              placeholder="Ex: 100"
+              defaultValue={transaction?.quantity ?? ''}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Valor atual (somente investimentos não-ação) */}
+      {type === 'investment' && category !== 'Renda Variável' && (
         <div className="space-y-2">
           <Label htmlFor="current_value">
             Valor Atual (R$)

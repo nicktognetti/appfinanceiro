@@ -103,3 +103,43 @@ alter table public.transactions
 -- 3. Coluna para valor atual do investimento (para cálculo de rendimento)
 alter table public.transactions
   add column if not exists current_value decimal(12, 2);
+
+-- =============================================
+-- Migração: Renda Variável (Ações) e Dividendos
+-- Execute este bloco no SQL Editor do Supabase
+-- =============================================
+
+-- 1. Adiciona ticker e quantidade às transações
+alter table public.transactions
+  add column if not exists ticker text,
+  add column if not exists quantity decimal(14, 6);
+
+create index if not exists transactions_ticker_idx on public.transactions(ticker);
+
+-- 2. Tabela de dividendos
+create table if not exists public.dividends (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  ticker text not null,
+  amount decimal(12, 2) not null check (amount > 0),
+  date date not null,
+  period text,
+  created_at timestamptz default now() not null
+);
+
+create index if not exists dividends_user_id_idx on public.dividends(user_id);
+create index if not exists dividends_ticker_idx on public.dividends(ticker);
+
+alter table public.dividends enable row level security;
+
+create policy "Users can view own dividends"
+  on public.dividends for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own dividends"
+  on public.dividends for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can delete own dividends"
+  on public.dividends for delete
+  using (auth.uid() = user_id);

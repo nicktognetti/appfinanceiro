@@ -7,12 +7,24 @@ export default async function InvestimentsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: investments } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('type', 'investment')
-    .order('date', { ascending: false })
+  const [{ data: investments }, { data: dividends }] = await Promise.all([
+    supabase
+      .from('transactions')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('type', 'investment')
+      .order('date', { ascending: false }),
+    supabase
+      .from('dividends')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('date', { ascending: false }),
+  ])
 
-  return <InvestmentsClient investments={investments ?? []} />
+  return (
+    <InvestmentsClient
+      investments={investments ?? []}
+      dividends={dividends ?? []}
+    />
+  )
 }
