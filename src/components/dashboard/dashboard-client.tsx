@@ -68,6 +68,8 @@ function setter(fn: (v: string) => void) {
   return (v: string | null) => { if (v !== null) fn(v) }
 }
 
+type PiePeriod = 'global' | 'month' | 'year' | 'all'
+
 interface Props { transactions: Transaction[] }
 
 export default function DashboardClient({ transactions }: Props) {
@@ -80,6 +82,9 @@ export default function DashboardClient({ transactions }: Props) {
   const [expandedCard, setExpanded] = useState<'income' | 'expense' | null>(null)
   const [zoomedChart, setZoomedChart] = useState<string | null>(null)
   const [barSeries, setBarSeries]   = useState({ Receitas: true, Despesas: true, Investimentos: true })
+  const [pieExpensePeriod, setPieExpensePeriod] = useState<PiePeriod>('global')
+  const [pieIncomePeriod, setPieIncomePeriod]   = useState<PiePeriod>('global')
+  const [topLimit, setTopLimit]                 = useState<5 | 10>(5)
 
   const years = useMemo(() => {
     const s = new Set(transactions.map(t => t.date.slice(0, 4)))
@@ -132,15 +137,29 @@ export default function DashboardClient({ transactions }: Props) {
   }
 
   /* ── Category breakdowns ────────────────────────── */
-  function byCategory(type: string) {
+  function catBreakdown(txs: Transaction[], type: string) {
     const m: Record<string, number> = {}
-    filtered.filter(t => t.type === type).forEach(t => {
+    txs.filter(t => t.type === type).forEach(t => {
       m[t.category] = (m[t.category] ?? 0) + Number(t.amount)
     })
     return Object.entries(m).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)
   }
-  const expenseCats = useMemo(() => byCategory('expense'), [filtered])
-  const incomeCats  = useMemo(() => byCategory('income'),  [filtered])
+
+  function txsForPeriod(period: PiePeriod) {
+    if (period === 'global') return filtered
+    if (period === 'all') return transactions
+    const yr = now.getFullYear()
+    if (period === 'year') return transactions.filter(t => parseISO(t.date).getFullYear() === yr)
+    return transactions.filter(t => {
+      const d = parseISO(t.date)
+      return d.getFullYear() === yr && d.getMonth() === now.getMonth()
+    })
+  }
+
+  const expenseCats      = useMemo(() => catBreakdown(filtered, 'expense'), [filtered])
+  const incomeCats       = useMemo(() => catBreakdown(filtered, 'income'),  [filtered])
+  const expenseCatsChart = useMemo(() => catBreakdown(txsForPeriod(pieExpensePeriod), 'expense'), [filtered, transactions, pieExpensePeriod])
+  const incomeCatsChart  = useMemo(() => catBreakdown(txsForPeriod(pieIncomePeriod),  'income'),  [filtered, transactions, pieIncomePeriod])
 
   /* ── Monthly chart data ─────────────────────────── */
   const monthlyData = useMemo(() => {
@@ -205,6 +224,21 @@ export default function DashboardClient({ transactions }: Props) {
       <div className="mt-3 h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(ratio * 100, 100)}%`, backgroundColor: color }} />
       </div>
+    )
+  }
+
+  function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+    return (
+      <button
+        onClick={e => { e.stopPropagation(); onClick() }}
+        className={`px-2 py-0.5 text-xs rounded-full border font-medium transition-all ${
+          active
+            ? 'bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-950/40 dark:border-blue-600 dark:text-blue-400'
+            : 'border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-500'
+        }`}
+      >
+        {label}
+      </button>
     )
   }
 
@@ -410,11 +444,32 @@ export default function DashboardClient({ transactions }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div className="lg:col-span-3 relative group cursor-pointer" onClick={() => openZoom('bar')}>
           <Card className="border-0 shadow-sm bg-white dark:bg-slate-800 transition-shadow hover:shadow-md h-full">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                Evolução mensal — {chartYear}
-              </CardTitle>
-              <Maximize2 className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between mb-2">
+                <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Evolução mensal — {chartYear}
+                </CardTitle>
+                <Maximize2 className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="flex gap-1.5">
+                {(['Receitas', 'Despesas', 'Investimentos'] as const).map(k => (
+                  <button
+                    key={k}
+                    onClick={e => { e.stopPropagation(); setBarSeries(p => ({ ...p, [k]: !p[k] })) }}
+                    className={`px-2 py-0.5 text-xs rounded-full border font-medium transition-all ${
+                      barSeries[k]
+                        ? k === 'Receitas'
+                          ? 'bg-green-50 border-green-400 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-400'
+                          : k === 'Despesas'
+                          ? 'bg-red-50 border-red-400 text-red-700 dark:bg-red-950/40 dark:border-red-700 dark:text-red-400'
+                          : 'bg-indigo-50 border-indigo-400 text-indigo-700 dark:bg-indigo-950/40 dark:border-indigo-700 dark:text-indigo-400'
+                        : 'border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-500'
+                    }`}
+                  >
+                    {k}
+                  </button>
+                ))}
+              </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={230}>
@@ -424,9 +479,9 @@ export default function DashboardClient({ transactions }: Props) {
                   <YAxis tickFormatter={formatCompact} tick={{ fontSize: 11, fill: dark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} width={52} />
                   <ReTooltip contentStyle={ttStyle} formatter={(v) => [typeof v === 'number' ? formatCurrency(v) : v, '']} />
                   <Legend formatter={(v) => <span style={{ fontSize: 11, color: dark ? '#94a3b8' : '#64748b' }}>{v}</span>} />
-                  <Bar dataKey="Receitas"     fill="#22c55e" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="Despesas"     fill="#ef4444" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="Investimentos" fill="#6366f1" radius={[3, 3, 0, 0]} />
+                  {barSeries.Receitas      && <Bar dataKey="Receitas"      fill="#22c55e" radius={[3, 3, 0, 0]} />}
+                  {barSeries.Despesas      && <Bar dataKey="Despesas"      fill="#ef4444" radius={[3, 3, 0, 0]} />}
+                  {barSeries.Investimentos && <Bar dataKey="Investimentos" fill="#6366f1" radius={[3, 3, 0, 0]} />}
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -466,35 +521,63 @@ export default function DashboardClient({ transactions }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="relative group cursor-pointer" onClick={() => openZoom('pie-expense')}>
           <Card className="border-0 shadow-sm bg-white dark:bg-slate-800 transition-shadow hover:shadow-md h-full">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-100">Despesas / categoria</CardTitle>
-              <Maximize2 className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between mb-2">
+                <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-100">Despesas / categoria</CardTitle>
+                <Maximize2 className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="flex gap-1.5">
+                {(['global', 'month', 'year', 'all'] as const).map(v => (
+                  <FilterChip
+                    key={v}
+                    label={v === 'global' ? 'Global' : v === 'month' ? 'Mês' : v === 'year' ? 'Ano' : 'Tudo'}
+                    active={pieExpensePeriod === v}
+                    onClick={() => setPieExpensePeriod(v)}
+                  />
+                ))}
+              </div>
             </CardHeader>
-            <CardContent><CategoryChart data={expenseCats} title="" /></CardContent>
+            <CardContent><CategoryChart data={expenseCatsChart} title="" /></CardContent>
           </Card>
         </div>
 
         <div className="relative group cursor-pointer" onClick={() => openZoom('pie-income')}>
           <Card className="border-0 shadow-sm bg-white dark:bg-slate-800 transition-shadow hover:shadow-md h-full">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-100">Receitas / categoria</CardTitle>
-              <Maximize2 className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between mb-2">
+                <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-100">Receitas / categoria</CardTitle>
+                <Maximize2 className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="flex gap-1.5">
+                {(['global', 'month', 'year', 'all'] as const).map(v => (
+                  <FilterChip
+                    key={v}
+                    label={v === 'global' ? 'Global' : v === 'month' ? 'Mês' : v === 'year' ? 'Ano' : 'Tudo'}
+                    active={pieIncomePeriod === v}
+                    onClick={() => setPieIncomePeriod(v)}
+                  />
+                ))}
+              </div>
             </CardHeader>
-            <CardContent><CategoryChart data={incomeCats} title="" /></CardContent>
+            <CardContent><CategoryChart data={incomeCatsChart} title="" /></CardContent>
           </Card>
         </div>
 
-        {/* Top 5 expenses */}
+        {/* Top N expenses */}
         <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-100">Top gastos</CardTitle>
+            <div className="flex gap-1.5">
+              <FilterChip label="Top 5"  active={topLimit === 5}  onClick={() => setTopLimit(5)}  />
+              <FilterChip label="Top 10" active={topLimit === 10} onClick={() => setTopLimit(10)} />
+            </div>
           </CardHeader>
           <CardContent>
             {expenseCats.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-10">Sem dados</p>
             ) : (
               <div className="space-y-3.5">
-                {expenseCats.slice(0, 5).map((item, i) => {
+                {expenseCats.slice(0, topLimit).map((item, i) => {
                   const p = (item.value / (expenseCats[0]?.value || 1)) * 100
                   return (
                     <div key={item.name}>
@@ -506,7 +589,7 @@ export default function DashboardClient({ transactions }: Props) {
                         <span className="font-semibold text-slate-800 dark:text-slate-100 tabular-nums text-xs">{formatCurrency(item.value)}</span>
                       </div>
                       <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${p}%`, backgroundColor: EXPENSE_COLORS[i] }} />
+                        <div className="h-full rounded-full" style={{ width: `${p}%`, backgroundColor: EXPENSE_COLORS[i % EXPENSE_COLORS.length] }} />
                       </div>
                     </div>
                   )
@@ -600,7 +683,7 @@ export default function DashboardClient({ transactions }: Props) {
               {(zoomedChart === 'pie-expense' || zoomedChart === 'pie-income') && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                   <CategoryChart
-                    data={zoomedChart === 'pie-expense' ? expenseCats : incomeCats}
+                    data={zoomedChart === 'pie-expense' ? expenseCatsChart : incomeCatsChart}
                     title=""
                     height={360}
                   />
@@ -608,8 +691,8 @@ export default function DashboardClient({ transactions }: Props) {
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider sticky top-0 bg-white dark:bg-slate-800 pb-1">
                       Detalhamento completo
                     </p>
-                    {(zoomedChart === 'pie-expense' ? expenseCats : incomeCats).map((item, i) => {
-                      const cats = zoomedChart === 'pie-expense' ? expenseCats : incomeCats
+                    {(zoomedChart === 'pie-expense' ? expenseCatsChart : incomeCatsChart).map((item, i) => {
+                      const cats = zoomedChart === 'pie-expense' ? expenseCatsChart : incomeCatsChart
                       const total = cats.reduce((s, x) => s + x.value, 0)
                       const p = total ? item.value / total * 100 : 0
                       return (
@@ -634,51 +717,6 @@ export default function DashboardClient({ transactions }: Props) {
           </Card>
         </div>
       )}
-
-      {/* ── Recent transactions ──────────────────────── */}
-      <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
-        <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-100">Transações recentes</CardTitle>
-          <span className="text-xs text-slate-400 dark:text-slate-500">{recentTxs.length} de {filtered.length}</span>
-        </CardHeader>
-        <CardContent>
-          {recentTxs.length === 0 ? (
-            <p className="text-center py-8 text-slate-400 dark:text-slate-500 text-sm">Nenhuma transação no período</p>
-          ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
-              {recentTxs.map(t => (
-                <div key={t.id} className="flex items-center gap-3 py-3">
-                  <div className={`p-2 rounded-lg flex-shrink-0 ${
-                    t.type === 'income'     ? 'bg-green-50 dark:bg-green-950/40'
-                    : t.type === 'investment' ? 'bg-indigo-50 dark:bg-indigo-950/40'
-                    : 'bg-red-50 dark:bg-red-950/40'
-                  }`}>
-                    {t.type === 'income'
-                      ? <ArrowUpCircle  className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      : t.type === 'investment'
-                      ? <TrendingUp     className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                      : <ArrowDownCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
-                    }
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-800 dark:text-slate-100 text-sm truncate">{t.description}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
-                      {t.category} · {format(parseISO(t.date), 'dd MMM', { locale: ptBR })}
-                    </p>
-                  </div>
-                  <p className={`font-semibold text-sm flex-shrink-0 tabular-nums ${
-                    t.type === 'income'     ? 'text-green-600 dark:text-green-400'
-                    : t.type === 'investment' ? 'text-indigo-600 dark:text-indigo-400'
-                    : 'text-red-500 dark:text-red-400'
-                  }`}>
-                    {t.type === 'income' ? '+' : ''}{formatCurrency(Number(t.amount))}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* ── Compromissos Futuros ─────────────────────── */}
       <div className="pt-2">
@@ -770,6 +808,51 @@ export default function DashboardClient({ transactions }: Props) {
           </div>
         )}
       </div>
+
+      {/* ── Recent transactions ──────────────────────── */}
+      <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+          <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-100">Transações recentes</CardTitle>
+          <span className="text-xs text-slate-400 dark:text-slate-500">{recentTxs.length} de {filtered.length}</span>
+        </CardHeader>
+        <CardContent>
+          {recentTxs.length === 0 ? (
+            <p className="text-center py-8 text-slate-400 dark:text-slate-500 text-sm">Nenhuma transação no período</p>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
+              {recentTxs.map(t => (
+                <div key={t.id} className="flex items-center gap-3 py-3">
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${
+                    t.type === 'income'     ? 'bg-green-50 dark:bg-green-950/40'
+                    : t.type === 'investment' ? 'bg-indigo-50 dark:bg-indigo-950/40'
+                    : 'bg-red-50 dark:bg-red-950/40'
+                  }`}>
+                    {t.type === 'income'
+                      ? <ArrowUpCircle  className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      : t.type === 'investment'
+                      ? <TrendingUp     className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                      : <ArrowDownCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-800 dark:text-slate-100 text-sm truncate">{t.description}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      {t.category} · {format(parseISO(t.date), 'dd MMM', { locale: ptBR })}
+                    </p>
+                  </div>
+                  <p className={`font-semibold text-sm flex-shrink-0 tabular-nums ${
+                    t.type === 'income'     ? 'text-green-600 dark:text-green-400'
+                    : t.type === 'investment' ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-red-500 dark:text-red-400'
+                  }`}>
+                    {t.type === 'income' ? '+' : ''}{formatCurrency(Number(t.amount))}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
     </div>
   )
