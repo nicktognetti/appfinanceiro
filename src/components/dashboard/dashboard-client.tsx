@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import {
   ArrowDownCircle, ArrowUpCircle, ChevronDown,
-  TrendingUp, TrendingDown, Wallet, X, Maximize2,
+  TrendingUp, TrendingDown, Wallet, X, Maximize2, CreditCard,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,12 +13,12 @@ import {
 import TransactionDialog from '@/components/transactions/transaction-dialog'
 import CategoryChart from './category-chart'
 import type { Transaction } from '@/types/database'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, addMonths } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip,
   Legend, ResponsiveContainer, CartesianGrid,
-  AreaChart, Area,
+  AreaChart, Area, Cell,
 } from 'recharts'
 import { useTheme } from 'next-themes'
 
@@ -30,6 +30,31 @@ const MONTHS_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'S
 
 const CAT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 const EXPENSE_COLORS = ['#ef4444', '#f97316', '#eab308', '#8b5cf6', '#06b6d4']
+const INSTALL_COLORS = ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5']
+
+function projectInstallments(txs: Transaction[]) {
+  const today = new Date()
+  const map = new Map<string, number>()
+  txs.forEach(tx => {
+    if (!tx.installment_current || !tx.installment_total) return
+    const remaining = tx.installment_total - tx.installment_current
+    if (remaining <= 0) return
+    const base = parseISO(tx.date)
+    for (let i = 1; i <= remaining; i++) {
+      const future = addMonths(base, i)
+      if (future < today) continue
+      const key = format(future, 'yyyy-MM')
+      map.set(key, (map.get(key) ?? 0) + Number(tx.amount))
+    }
+  })
+  return [...map.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(0, 12)
+    .map(([key, total]) => ({
+      mes: format(parseISO(`${key}-01`), "MMM/yy", { locale: ptBR }),
+      total,
+    }))
+}
 
 function formatCurrency(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -136,6 +161,13 @@ export default function DashboardClient({ transactions }: Props) {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 8)
 
+  const installmentTxs = useMemo(() =>
+    transactions.filter(t => t.installment_current != null && t.installment_total != null),
+    [transactions]
+  )
+  const projection  = useMemo(() => projectInstallments(installmentTxs), [installmentTxs])
+  const totalFuture = projection.reduce((s, p) => s + p.total, 0)
+
   const isThisMonth = month === MONTHS[now.getMonth()] && year === String(now.getFullYear())
   const isThisYear  = month === 'all' && year === String(now.getFullYear())
   const isAllTime   = month === 'all' && year === 'all'
@@ -149,9 +181,17 @@ export default function DashboardClient({ transactions }: Props) {
   }
 
   /* ── Mini components ────────────────────────────── */
-  function PctBadge({ change }: { change: number | null }) {
+  function PctBadge({ change, inverted }: { change: number | null; inverted?: boolean }) {
     if (change === null) return null
     const up = change >= 0
+    if (inverted) {
+      return (
+        <span className={`flex items-center gap-0.5 text-xs font-semibold ${up ? 'text-white/90' : 'text-yellow-200'}`}>
+          {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+          {Math.abs(change).toFixed(1)}%
+        </span>
+      )
+    }
     return (
       <span className={`flex items-center gap-0.5 text-xs font-semibold ${up ? 'text-emerald-500' : 'text-red-400'}`}>
         {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -240,24 +280,26 @@ export default function DashboardClient({ transactions }: Props) {
         {/* Receitas */}
         <Card
           onClick={() => setExpanded(expandedCard === 'income' ? null : 'income')}
-          className={`border-0 shadow-sm bg-white dark:bg-slate-800 cursor-pointer transition-all hover:shadow-md select-none ${expandedCard === 'income' ? 'ring-2 ring-green-500/40' : ''}`}
+          className={`border-0 shadow-md cursor-pointer transition-all hover:shadow-xl select-none bg-gradient-to-br from-emerald-500 to-green-600 ${expandedCard === 'income' ? 'ring-2 ring-white/40' : ''}`}
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Receitas</p>
+              <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">Receitas</p>
               <div className="flex items-center gap-1">
-                <div className="bg-green-50 dark:bg-green-950/40 p-1.5 rounded-lg">
-                  <ArrowUpCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                <div className="bg-white/20 p-1.5 rounded-lg">
+                  <ArrowUpCircle className="h-3.5 w-3.5 text-white" />
                 </div>
-                <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${expandedCard === 'income' ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-3 w-3 text-white/60 transition-transform ${expandedCard === 'income' ? 'rotate-180' : ''}`} />
               </div>
             </div>
-            <p className="text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{formatCurrency(totalIncome)}</p>
+            <p className="text-xl font-bold text-white tabular-nums">{formatCurrency(totalIncome)}</p>
             <div className="flex items-center justify-between mt-1.5">
-              <PctBadge change={pct(totalIncome, prevIncome)} />
-              {prevPeriod.length > 0 && <p className="text-xs text-slate-400 dark:text-slate-500">vs anterior</p>}
+              <PctBadge change={pct(totalIncome, prevIncome)} inverted />
+              {prevPeriod.length > 0 && <p className="text-xs text-white/50">vs anterior</p>}
             </div>
-            <MiniBar ratio={totalIncome / grandTotal} color="#22c55e" />
+            <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
+              <div className="h-full bg-white/70 rounded-full transition-all" style={{ width: `${Math.min((totalIncome / grandTotal) * 100, 100)}%` }} />
+            </div>
           </CardContent>
         </Card>
 
@@ -637,6 +679,97 @@ export default function DashboardClient({ transactions }: Props) {
           )}
         </CardContent>
       </Card>
+
+      {/* ── Compromissos Futuros ─────────────────────── */}
+      <div className="pt-2">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Compromissos Futuros</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Parcelas restantes nos próximos 12 meses — baseado em todas as transações parceladas
+            </p>
+          </div>
+          {totalFuture > 0 && (
+            <div className="text-right">
+              <p className="text-xs text-slate-400 dark:text-slate-500">Total futuro</p>
+              <p className="text-lg font-bold text-orange-500">{formatCurrency(totalFuture)}</p>
+            </div>
+          )}
+        </div>
+
+        {projection.length === 0 ? (
+          <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
+            <CardContent className="py-12 text-center">
+              <CreditCard className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400 dark:text-slate-500 text-sm">Nenhum compromisso futuro encontrado.</p>
+              <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">
+                Importe uma fatura com compras parceladas para ver a projeção.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Bar chart */}
+            <Card className="border-0 shadow-sm bg-white dark:bg-slate-800 lg:col-span-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-100">Parcelas por mês</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={projection} barCategoryGap="30%">
+                    <CartesianGrid strokeDasharray="3 3" stroke={dark ? 'rgba(148,163,184,0.08)' : 'rgba(100,116,139,0.08)'} vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 11, fill: dark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={formatCompact} tick={{ fontSize: 11, fill: dark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} width={52} />
+                    <ReTooltip contentStyle={ttStyle} formatter={(v) => [typeof v === 'number' ? formatCurrency(v) : v, 'Parcelas']} />
+                    <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+                      {projection.map((_, i) => (
+                        <Cell key={i} fill={INSTALL_COLORS[Math.min(i, INSTALL_COLORS.length - 1)]} opacity={dark ? 1 : 0.9} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Month list */}
+            <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-100">Resumo mensal</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2.5">
+                  {projection.map((p, i) => (
+                    <div key={p.mes} className="flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ background: INSTALL_COLORS[Math.min(i, INSTALL_COLORS.length - 1)] }}
+                      />
+                      <span className="text-xs font-mono text-slate-500 dark:text-slate-400 w-14">{p.mes}</span>
+                      <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${(p.total / Math.max(...projection.map(x => x.total))) * 100}%`,
+                            background: INSTALL_COLORS[Math.min(i, INSTALL_COLORS.length - 1)],
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 tabular-nums text-right w-20">
+                        {formatCurrency(p.total)}
+                      </span>
+                    </div>
+                  ))}
+                  {installmentTxs.length > 0 && (
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-400 dark:text-slate-500">
+                      {installmentTxs.length} compra(s) parcelada(s) ativa(s)
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
 
     </div>
   )
