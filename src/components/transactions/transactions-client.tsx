@@ -40,7 +40,7 @@ const ALL_CATEGORIES = [...new Set([...CATEGORIES, ...INVESTMENT_CATEGORIES])]
 
 export default function TransactionsClient({ transactions }: Props) {
   const currentDate = new Date()
-  const [month, setMonth] = useState(String(currentDate.getMonth() + 1))
+  const [month, setMonth] = useState(MONTHS[currentDate.getMonth()])
   const [year, setYear] = useState(String(currentDate.getFullYear()))
   const [category, setCategory] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -55,7 +55,7 @@ export default function TransactionsClient({ transactions }: Props) {
   const filtered = useMemo(() => {
     return transactions.filter(t => {
       const tDate = parseISO(t.date)
-      if (month !== 'all' && tDate.getMonth() + 1 !== Number(month)) return false
+      if (month !== 'all' && tDate.getMonth() !== MONTHS.indexOf(month)) return false
       if (year !== 'all' && tDate.getFullYear() !== Number(year)) return false
       if (category !== 'all' && t.category !== category) return false
       if (typeFilter !== 'all' && t.type !== typeFilter) return false
@@ -118,8 +118,8 @@ export default function TransactionsClient({ transactions }: Props) {
             <SelectTrigger className="w-full"><SelectValue placeholder="Mês" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os meses</SelectItem>
-              {MONTHS.map((m, i) => (
-                <SelectItem key={i + 1} value={String(i + 1)}>{m}</SelectItem>
+              {MONTHS.map((m) => (
+                <SelectItem key={m} value={m}>{m}</SelectItem>
               ))}
             </SelectContent>
           </Select>

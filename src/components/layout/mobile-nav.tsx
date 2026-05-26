@@ -4,17 +4,18 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { LayoutDashboard, List, LogOut, Menu, Tag, TrendingUp, X } from 'lucide-react'
+import { LayoutDashboard, List, LogOut, Menu, Tag, TrendingUp, Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { ThemeToggle } from '@/components/theme-toggle'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/transacoes', label: 'Transações', icon: List },
+  { href: '/dashboard',    label: 'Dashboard',      icon: LayoutDashboard },
+  { href: '/transacoes',   label: 'Transações',     icon: List },
   { href: '/investimentos', label: 'Investimentos', icon: TrendingUp },
-  { href: '/categorias', label: 'Categorias', icon: Tag },
+  { href: '/importar',     label: 'Importar Fatura', icon: Upload },
+  { href: '/categorias',   label: 'Categorias',     icon: Tag },
 ]
 
 export default function MobileNav({ userEmail }: { userEmail: string }) {

@@ -5,173 +5,361 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { TrendingUp } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
-/* ─── Ticker chip component ──────────────────────────────── */
-function Ticker({
-  symbol, value, change, positive, style,
-}: {
-  symbol: string; value: string; change: string; positive: boolean
-  style?: React.CSSProperties
-}) {
-  return (
-    <div
-      className="hidden md:flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-1.5 absolute select-none pointer-events-none"
-      style={style}
-    >
-      <span className="text-[11px] text-slate-400 font-mono font-semibold">{symbol}</span>
-      <span className="text-xs font-bold text-white">{value}</span>
-      <span className={`text-[11px] font-semibold ${positive ? 'text-green-400' : 'text-red-400'}`}>
-        {positive ? '▲' : '▼'} {change}
-      </span>
-    </div>
-  )
-}
+/* Deterministic floating dots */
+const DOTS = [
+  { x: 7,  y: 18, s: 3, d: 0,   dur: 4.2 },
+  { x: 88, y: 12, s: 2, d: 1.1, dur: 5.1 },
+  { x: 22, y: 72, s: 4, d: 2.3, dur: 3.8 },
+  { x: 93, y: 58, s: 2, d: 0.7, dur: 6.0 },
+  { x: 48, y: 8,  s: 3, d: 1.8, dur: 4.5 },
+  { x: 73, y: 82, s: 2, d: 3.1, dur: 3.4 },
+  { x: 14, y: 47, s: 2, d: 2.8, dur: 5.5 },
+  { x: 62, y: 91, s: 3, d: 0.4, dur: 4.1 },
+  { x: 36, y: 33, s: 2, d: 3.7, dur: 3.9 },
+  { x: 80, y: 40, s: 3, d: 1.5, dur: 5.2 },
+  { x: 55, y: 65, s: 2, d: 2.0, dur: 4.8 },
+  { x: 4,  y: 85, s: 2, d: 0.9, dur: 3.6 },
+]
 
-/* ─── Main page ──────────────────────────────────────────── */
+const BINARY_COLS = [
+  ['01001011', '10110100', '00111010', '11001100', '01010111'],
+  ['10100011', '01110001', '11000101', '00101110', '10011010'],
+]
+
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState<string | null>(null)
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
-
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (error) {
-      setError('E-mail ou senha incorretos.')
-      setLoading(false)
-      return
-    }
-
+    if (error) { setError('Credenciais inválidas.'); setLoading(false); return }
     router.push('/dashboard')
     router.refresh()
   }
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center relative overflow-hidden p-4"
-      style={{ background: '#060d1e' }}
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: 'radial-gradient(ellipse at 25% 25%, #071428 0%, #030a18 55%, #010408 100%)' }}
     >
-      {/* ── Grid overlay ── */}
+
+      {/* ── Tron perspective grid floor ─────────────────────── */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-x-0 bottom-0 pointer-events-none"
         style={{
+          height: '52%',
           backgroundImage:
-            'linear-gradient(rgba(59,130,246,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.06) 1px, transparent 1px)',
+            'linear-gradient(rgba(0,212,255,0.14) 1px, transparent 1px),' +
+            'linear-gradient(90deg, rgba(0,212,255,0.14) 1px, transparent 1px)',
           backgroundSize: '60px 60px',
+          transform: 'perspective(480px) rotateX(65deg)',
+          transformOrigin: 'bottom center',
+          animation: 'grid-drift 3s linear infinite',
+        }}
+      />
+      {/* Horizon fade over grid */}
+      <div
+        className="absolute inset-x-0 bottom-0 pointer-events-none"
+        style={{
+          height: '52%',
+          background: 'linear-gradient(to bottom, #030a18 0%, rgba(3,10,24,0.2) 35%, transparent 100%)',
         }}
       />
 
-      {/* ── Glow orbs ── */}
-      <div className="absolute top-1/4 left-1/5 w-96 h-96 bg-blue-700/15 rounded-full blur-[80px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/5 w-96 h-96 bg-indigo-700/15 rounded-full blur-[80px] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-900/10 rounded-full blur-[100px] pointer-events-none" />
-
-      {/* ── Floating tickers ── */}
-      <Ticker symbol="IBOV" value="130.245" change="+1,24%" positive style={{ top: '10%', left: '4%', animation: 'ticker-float 5s ease-in-out infinite' }} />
-      <Ticker symbol="USD/BRL" value="R$ 5,08" change="-0,18%" positive={false} style={{ top: '8%', right: '4%', animation: 'ticker-float 4.5s ease-in-out 0.5s infinite' }} />
-      <Ticker symbol="VALE3" value="R$ 67,34" change="+1,15%" positive style={{ top: '42%', left: '2%', animation: 'ticker-float 6s ease-in-out 1s infinite' }} />
-      <Ticker symbol="PETR4" value="R$ 38,90" change="-0,32%" positive={false} style={{ top: '32%', right: '3%', animation: 'ticker-float 5.5s ease-in-out 0.3s infinite' }} />
-      <Ticker symbol="ITUB4" value="R$ 32,15" change="+0,65%" positive style={{ bottom: '28%', left: '5%', animation: 'ticker-float 4s ease-in-out 1.5s infinite' }} />
-      <Ticker symbol="BTC" value="$67.890" change="+2,31%" positive style={{ bottom: '22%', right: '4%', animation: 'ticker-float 5s ease-in-out 0.8s infinite' }} />
-
-      {/* ── Stock chart SVG ── */}
+      {/* ── Ambient glow orbs ───────────────────────────────── */}
       <div
-        className="absolute bottom-0 left-0 right-0 pointer-events-none"
-        style={{ animation: 'chart-reveal 4s ease-out 0.3s both' }}
-      >
-        <svg viewBox="0 0 1440 260" preserveAspectRatio="none" className="w-full" height="260">
-          <defs>
-            <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#22c55e" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
-            </linearGradient>
-            <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.10" />
-              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          {/* Secondary chart (blue, lower) */}
-          <path
-            d="M 0,240 C 80,232 160,215 240,222 C 320,229 400,200 480,185 C 560,170 640,182 720,162 C 800,142 880,152 960,132 C 1040,112 1120,122 1200,105 C 1280,88 1360,95 1440,80 L 1440,260 L 0,260 Z"
-            fill="url(#g2)"
-          />
-          <path
-            d="M 0,240 C 80,232 160,215 240,222 C 320,229 400,200 480,185 C 560,170 640,182 720,162 C 800,142 880,152 960,132 C 1040,112 1120,122 1200,105 C 1280,88 1360,95 1440,80"
-            fill="none"
-            stroke="rgba(59,130,246,0.25)"
-            strokeWidth="1.5"
-          />
-          {/* Main chart (green, upward) */}
-          <path
-            d="M 0,220 C 100,210 180,185 280,195 C 380,205 440,168 540,148 C 640,128 720,145 820,118 C 920,91 1000,108 1100,82 C 1200,56 1300,72 1440,45 L 1440,260 L 0,260 Z"
-            fill="url(#g1)"
-          />
-          <path
-            d="M 0,220 C 100,210 180,185 280,195 C 380,205 440,168 540,148 C 640,128 720,145 820,118 C 920,91 1000,108 1100,82 C 1200,56 1300,72 1440,45"
-            fill="none"
-            stroke="rgba(34,197,94,0.5)"
-            strokeWidth="2"
-          />
-          {/* Endpoint dot */}
-          <circle cx="1440" cy="45" r="4" fill="#22c55e" opacity="0.8" />
-          <circle cx="1440" cy="45" r="8" fill="#22c55e" opacity="0.2" />
-        </svg>
-      </div>
+        className="absolute pointer-events-none"
+        style={{
+          top: '8%', left: '5%',
+          width: 500, height: 500,
+          background: 'radial-gradient(circle, rgba(0,80,255,0.16) 0%, transparent 70%)',
+          borderRadius: '50%',
+          filter: 'blur(40px)',
+          animation: 'orb-drift 12s ease-in-out infinite',
+        }}
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: '35%', right: '5%',
+          width: 400, height: 400,
+          background: 'radial-gradient(circle, rgba(110,0,255,0.13) 0%, transparent 70%)',
+          borderRadius: '50%',
+          filter: 'blur(35px)',
+          animation: 'orb-drift 15s ease-in-out 5s infinite',
+        }}
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          bottom: '12%', left: '28%',
+          width: 340, height: 340,
+          background: 'radial-gradient(circle, rgba(0,212,255,0.1) 0%, transparent 70%)',
+          borderRadius: '50%',
+          filter: 'blur(30px)',
+          animation: 'orb-drift 10s ease-in-out 3s infinite',
+        }}
+      />
 
-      {/* ── Live indicator ── */}
-      <div className="absolute top-5 left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1.5 text-xs text-slate-400">
-        <span
-          className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"
-          style={{ animation: 'live-blink 1.5s ease-in-out infinite' }}
+      {/* ── Scan line ───────────────────────────────────────── */}
+      <div
+        className="absolute inset-x-0 pointer-events-none"
+        style={{
+          height: 2,
+          background:
+            'linear-gradient(90deg, transparent 0%, rgba(0,212,255,0.4) 20%, rgba(0,212,255,0.9) 50%, rgba(0,212,255,0.4) 80%, transparent 100%)',
+          animation: 'scan-line 6s linear infinite',
+          zIndex: 2,
+          boxShadow: '0 0 8px rgba(0,212,255,0.6)',
+        }}
+      />
+
+      {/* ── Floating dots ───────────────────────────────────── */}
+      {DOTS.map((dot, i) => (
+        <div
+          key={i}
+          className="absolute pointer-events-none rounded-full"
+          style={{
+            left: `${dot.x}%`,
+            top:  `${dot.y}%`,
+            width:  dot.s * 3,
+            height: dot.s * 3,
+            background: 'rgba(0,212,255,0.9)',
+            boxShadow: `0 0 ${dot.s * 5}px rgba(0,212,255,0.7)`,
+            animation: `particle-pulse ${dot.dur}s ease-in-out ${dot.d}s infinite`,
+          }}
         />
-        Mercado ativo
+      ))}
+
+      {/* ── Left side symbols ───────────────────────────────── */}
+      <div className="absolute left-5 top-1/2 -translate-y-1/2 hidden xl:flex flex-col gap-7 pointer-events-none">
+        {['◈', '⬡', '◉', '△', '◇'].map((sym, i) => (
+          <span
+            key={i}
+            style={{
+              color: 'rgba(0,212,255,0.3)',
+              fontSize: 15,
+              fontFamily: 'monospace',
+              animation: `data-flow ${2.5 + i * 0.6}s ease-in-out ${i * 0.4}s infinite`,
+            }}
+          >
+            {sym}
+          </span>
+        ))}
       </div>
 
-      {/* ── Glass card ── */}
-      <div className="relative z-10 w-full max-w-md">
+      {/* ── Right side binary streams ────────────────────────── */}
+      <div className="absolute right-5 top-1/2 -translate-y-1/2 hidden xl:flex gap-4 pointer-events-none">
+        {BINARY_COLS.map((col, ci) => (
+          <div key={ci} className="flex flex-col gap-2">
+            {col.map((bits, i) => (
+              <span
+                key={i}
+                style={{
+                  color: 'rgba(0,212,255,0.2)',
+                  fontSize: 9,
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.05em',
+                  animation: `data-flow ${1.8 + i * 0.35}s ease-in-out ${i * 0.25 + ci * 0.5}s infinite`,
+                }}
+              >
+                {bits}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* ── HUD header ─────────────────────────────────────── */}
+      <div
+        className="absolute top-5 left-5 text-xs pointer-events-none hidden sm:block"
+        style={{ color: 'rgba(0,212,255,0.3)', fontFamily: 'monospace', letterSpacing: '0.1em' }}
+      >
+        CF-SYS // v2.4.1
+      </div>
+      <div className="absolute top-5 right-5 flex items-center gap-2 z-10 hidden sm:flex">
+        <span
+          className="w-1.5 h-1.5 rounded-full"
+          style={{
+            background: '#00d4ff',
+            boxShadow: '0 0 6px #00d4ff',
+            animation: 'live-blink 1.5s ease-in-out infinite',
+          }}
+        />
+        <span style={{ color: 'rgba(0,212,255,0.55)', fontSize: 11, fontFamily: 'monospace', letterSpacing: '0.1em' }}>
+          SISTEMA ONLINE
+        </span>
+      </div>
+
+      {/* ── Main card ──────────────────────────────────────── */}
+      <div
+        className="relative z-10 w-full max-w-sm px-4"
+        style={{ animation: 'card-appear 0.7s ease-out both' }}
+      >
+
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center bg-blue-600 p-3 rounded-2xl mb-4 shadow-lg shadow-blue-600/30">
-            <TrendingUp className="h-7 w-7 text-white" />
+          <div className="relative inline-flex items-center justify-center mb-5">
+            {/* Outer spinning ring */}
+            <div
+              className="absolute"
+              style={{
+                width: 76, height: 76,
+                border: '1.5px solid transparent',
+                borderTopColor: 'rgba(0,212,255,0.9)',
+                borderRightColor: 'rgba(0,212,255,0.3)',
+                borderRadius: '50%',
+                animation: 'ring-spin 2.4s linear infinite',
+              }}
+            />
+            {/* Middle dashed ring */}
+            <div
+              className="absolute"
+              style={{
+                width: 62, height: 62,
+                border: '1px dashed rgba(0,212,255,0.2)',
+                borderRadius: '50%',
+                animation: 'ring-spin-rev 4s linear infinite',
+              }}
+            />
+            {/* Icon core */}
+            <div
+              style={{
+                width: 48, height: 48,
+                background: 'linear-gradient(135deg, rgba(0,80,200,0.7) 0%, rgba(0,200,255,0.5) 100%)',
+                border: '1px solid rgba(0,212,255,0.5)',
+                borderRadius: '12px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 24px rgba(0,212,255,0.35), inset 0 0 12px rgba(0,212,255,0.1)',
+              }}
+            >
+              <TrendingUp style={{ width: 22, height: 22, color: '#7ff4ff' }} />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white leading-tight">Controle Financeiro</h1>
-          <p className="text-slate-400 text-sm mt-1">Nicholas Tognetti</p>
+
+          <h1
+            className="text-2xl font-bold text-white tracking-wide"
+            style={{ textShadow: '0 0 20px rgba(0,212,255,0.25)' }}
+          >
+            Controle Financeiro
+          </h1>
+          <p
+            className="text-xs mt-1.5 tracking-widest uppercase"
+            style={{ color: 'rgba(0,212,255,0.45)', fontFamily: 'monospace' }}
+          >
+            Nicholas Tognetti
+          </p>
         </div>
 
-        {/* Form card */}
-        <div className="bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/40">
-          <h2 className="text-xl font-bold text-white text-center mb-1">Entrar</h2>
-          <p className="text-slate-400 text-sm text-center mb-6">Acesse sua conta para gerenciar suas finanças</p>
+        {/* Glass card */}
+        <div
+          style={{
+            background: 'rgba(3, 12, 28, 0.88)',
+            backdropFilter: 'blur(28px)',
+            border: '1px solid rgba(0,212,255,0.22)',
+            borderRadius: 20,
+            padding: '28px 28px 24px',
+            position: 'relative',
+            animation: 'neon-pulse 3.5s ease-in-out infinite',
+          }}
+        >
+          {/* HUD corner brackets */}
+          {[
+            { top: 0,    left:  0,   bt: 'borderTop',    bl: 'borderLeft'  },
+            { top: 0,    right: 0,   bt: 'borderTop',    bl: 'borderRight' },
+            { bottom: 0, left:  0,   bt: 'borderBottom', bl: 'borderLeft'  },
+            { bottom: 0, right: 0,   bt: 'borderBottom', bl: 'borderRight' },
+          ].map((c, i) => (
+            <div
+              key={i}
+              className="absolute"
+              style={{
+                ...c,
+                width: 14, height: 14,
+                [c.bt]: '2px solid rgba(0,212,255,0.7)',
+                [c.bl]: '2px solid rgba(0,212,255,0.7)',
+                borderRadius: i === 0 ? '4px 0 0 0' : i === 1 ? '0 4px 0 0' : i === 2 ? '0 0 0 4px' : '0 0 4px 0',
+              } as React.CSSProperties}
+            />
+          ))}
+
+          <p
+            className="text-center text-xs tracking-widest uppercase mb-6"
+            style={{ color: 'rgba(0,212,255,0.4)', fontFamily: 'monospace' }}
+          >
+            ── Autenticação do Sistema ──
+          </p>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg mb-4">
-              {error}
+            <div
+              className="text-xs text-center px-4 py-3 rounded-lg mb-5"
+              style={{
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.28)',
+                color: '#f87171',
+                fontFamily: 'monospace',
+                letterSpacing: '0.05em',
+              }}
+            >
+              ⚠ {error}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-300">E-mail</label>
+              <label
+                className="block text-xs tracking-widest uppercase"
+                style={{ color: 'rgba(0,212,255,0.5)', fontFamily: 'monospace' }}
+              >
+                ID de Usuário
+              </label>
               <input
                 type="email"
-                placeholder="seu@email.com"
+                placeholder="usuario@dominio.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full h-10 rounded-lg px-3 bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                style={{
+                  width: '100%',
+                  height: 40,
+                  borderRadius: 8,
+                  paddingLeft: 12,
+                  paddingRight: 12,
+                  background: 'rgba(0,212,255,0.04)',
+                  border: '1px solid rgba(0,212,255,0.18)',
+                  color: '#e2e8f0',
+                  fontSize: 13,
+                  fontFamily: 'monospace',
+                  outline: 'none',
+                  transition: 'border-color 0.2s, box-shadow 0.2s',
+                }}
+                onFocus={e => {
+                  e.target.style.borderColor = 'rgba(0,212,255,0.55)'
+                  e.target.style.boxShadow   = '0 0 0 1px rgba(0,212,255,0.2), 0 0 14px rgba(0,212,255,0.12)'
+                }}
+                onBlur={e => {
+                  e.target.style.borderColor = 'rgba(0,212,255,0.18)'
+                  e.target.style.boxShadow   = 'none'
+                }}
               />
             </div>
+
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-300">Senha</label>
+              <label
+                className="block text-xs tracking-widest uppercase"
+                style={{ color: 'rgba(0,212,255,0.5)', fontFamily: 'monospace' }}
+              >
+                Senha de Acesso
+              </label>
               <input
                 type="password"
                 placeholder="••••••••"
@@ -179,18 +367,76 @@ export default function LoginPage() {
                 onChange={e => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                className="w-full h-10 rounded-lg px-3 bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                style={{
+                  width: '100%',
+                  height: 40,
+                  borderRadius: 8,
+                  paddingLeft: 12,
+                  paddingRight: 12,
+                  background: 'rgba(0,212,255,0.04)',
+                  border: '1px solid rgba(0,212,255,0.18)',
+                  color: '#e2e8f0',
+                  fontSize: 13,
+                  fontFamily: 'monospace',
+                  outline: 'none',
+                  transition: 'border-color 0.2s, box-shadow 0.2s',
+                }}
+                onFocus={e => {
+                  e.target.style.borderColor = 'rgba(0,212,255,0.55)'
+                  e.target.style.boxShadow   = '0 0 0 1px rgba(0,212,255,0.2), 0 0 14px rgba(0,212,255,0.12)'
+                }}
+                onBlur={e => {
+                  e.target.style.borderColor = 'rgba(0,212,255,0.18)'
+                  e.target.style.boxShadow   = 'none'
+                }}
               />
             </div>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Button>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                height: 42,
+                marginTop: 8,
+                borderRadius: 9,
+                background: loading
+                  ? 'rgba(0,80,160,0.35)'
+                  : 'linear-gradient(135deg, rgba(0,90,220,0.85) 0%, rgba(0,200,255,0.75) 100%)',
+                border: '1px solid rgba(0,212,255,0.45)',
+                color: '#fff',
+                fontSize: 12,
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                transition: 'opacity 0.2s, box-shadow 0.2s',
+                boxShadow: loading ? 'none' : '0 0 24px rgba(0,212,255,0.22)',
+              }}
+              onMouseEnter={e => {
+                if (!loading) (e.target as HTMLButtonElement).style.boxShadow = '0 0 36px rgba(0,212,255,0.4)'
+              }}
+              onMouseLeave={e => {
+                (e.target as HTMLButtonElement).style.boxShadow = loading ? 'none' : '0 0 24px rgba(0,212,255,0.22)'
+              }}
+            >
+              {loading ? '[ AUTENTICANDO... ]' : '[ ENTRAR NO SISTEMA ]'}
+            </button>
           </form>
 
-          <p className="text-sm text-slate-500 text-center mt-5">
-            Não tem conta?{' '}
-            <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
-              Criar conta
+          <p
+            className="text-center mt-5"
+            style={{ fontSize: 11, fontFamily: 'monospace', color: 'rgba(100,150,180,0.5)', letterSpacing: '0.05em' }}
+          >
+            Sem acesso?{' '}
+            <Link
+              href="/signup"
+              style={{ color: 'rgba(0,212,255,0.65)' }}
+              className="hover:text-cyan-300 transition-colors"
+            >
+              CRIAR CONTA
             </Link>
           </p>
         </div>

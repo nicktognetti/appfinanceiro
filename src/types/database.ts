@@ -35,6 +35,9 @@ export interface Transaction {
   current_value: number | null
   ticker: string | null
   quantity: number | null
+  installment_current: number | null
+  installment_total: number | null
+  card_source: string | null
   created_at: string
   updated_at: string
 }
@@ -72,6 +75,9 @@ export type Database = {
           current_value: number | null
           ticker: string | null
           quantity: number | null
+          installment_current: number | null
+          installment_total: number | null
+          card_source: string | null
           created_at: string
           updated_at: string
         }
@@ -86,6 +92,9 @@ export type Database = {
           current_value?: number | null
           ticker?: string | null
           quantity?: number | null
+          installment_current?: number | null
+          installment_total?: number | null
+          card_source?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -100,6 +109,9 @@ export type Database = {
           current_value?: number | null
           ticker?: string | null
           quantity?: number | null
+          installment_current?: number | null
+          installment_total?: number | null
+          card_source?: string | null
           created_at?: string
           updated_at?: string
         }

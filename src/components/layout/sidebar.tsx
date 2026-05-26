@@ -3,16 +3,17 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { LayoutDashboard, List, LogOut, Tag, TrendingUp } from 'lucide-react'
+import { LayoutDashboard, List, LogOut, Tag, TrendingUp, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/transacoes', label: 'Transações', icon: List },
+  { href: '/dashboard',   label: 'Dashboard',     icon: LayoutDashboard },
+  { href: '/transacoes',  label: 'Transações',    icon: List },
   { href: '/investimentos', label: 'Investimentos', icon: TrendingUp },
-  { href: '/categorias', label: 'Categorias', icon: Tag },
+  { href: '/importar',    label: 'Importar Fatura', icon: Upload },
+  { href: '/categorias',  label: 'Categorias',    icon: Tag },
 ]
 
 export default function Sidebar({ userEmail }: { userEmail: string }) {

@@ -16,6 +16,7 @@ interface DataItem {
 interface Props {
   data: DataItem[]
   title: string
+  height?: number
 }
 
 function formatCurrency(value: number) {
@@ -39,7 +40,7 @@ function CustomTooltip({ active, payload, dark }: any) {
   return null
 }
 
-export default function CategoryChart({ data, title }: Props) {
+export default function CategoryChart({ data, title, height = 280 }: Props) {
   const { resolvedTheme } = useTheme()
   const dark = resolvedTheme === 'dark'
   const legendTextColor = dark ? '#94a3b8' : '#64748b'
@@ -55,7 +56,7 @@ export default function CategoryChart({ data, title }: Props) {
   return (
     <div>
       {title && <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-4">{title}</h3>}
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={height}>
         <PieChart>
           <Pie
             data={data}
