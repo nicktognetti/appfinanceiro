@@ -314,26 +314,24 @@ export default function DashboardClient({ transactions }: Props) {
         {/* Receitas */}
         <Card
           onClick={() => setExpanded(expandedCard === 'income' ? null : 'income')}
-          className={`border-0 shadow-md cursor-pointer transition-all hover:shadow-xl select-none bg-gradient-to-br from-emerald-500 to-green-600 ${expandedCard === 'income' ? 'ring-2 ring-white/40' : ''}`}
+          className={`border-0 shadow-sm bg-white dark:bg-slate-800 cursor-pointer transition-all hover:shadow-md select-none ${expandedCard === 'income' ? 'ring-2 ring-green-500/40' : ''}`}
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">Receitas</p>
+              <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Receitas</p>
               <div className="flex items-center gap-1">
-                <div className="bg-white/20 p-1.5 rounded-lg">
-                  <ArrowUpCircle className="h-3.5 w-3.5 text-white" />
+                <div className="bg-green-50 dark:bg-green-950/40 p-1.5 rounded-lg">
+                  <ArrowUpCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
                 </div>
-                <ChevronDown className={`h-3 w-3 text-white/60 transition-transform ${expandedCard === 'income' ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${expandedCard === 'income' ? 'rotate-180' : ''}`} />
               </div>
             </div>
-            <p className="text-xl font-bold text-white tabular-nums">{formatCurrency(totalIncome)}</p>
+            <p className="text-xl font-bold text-green-600 dark:text-green-400 tabular-nums">{formatCurrency(totalIncome)}</p>
             <div className="flex items-center justify-between mt-1.5">
-              <PctBadge change={pct(totalIncome, prevIncome)} inverted />
-              {prevPeriod.length > 0 && <p className="text-xs text-white/50">vs anterior</p>}
+              <PctBadge change={pct(totalIncome, prevIncome)} />
+              {prevPeriod.length > 0 && <p className="text-xs text-slate-400 dark:text-slate-500">vs anterior</p>}
             </div>
-            <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
-              <div className="h-full bg-white/70 rounded-full transition-all" style={{ width: `${Math.min((totalIncome / grandTotal) * 100, 100)}%` }} />
-            </div>
+            <MiniBar ratio={totalIncome / grandTotal} color="#22c55e" />
           </CardContent>
         </Card>
 
